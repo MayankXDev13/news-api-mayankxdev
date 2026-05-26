@@ -35,7 +35,7 @@ def get_top_headlines(
     try:
         return newsapi.get_top_headlines(
             category=category,
-            language=COUNTRIES_LANGUAGES[country],
+            language=COUNTRIES_LANGUAGES.get(country, "en"),
             country=country,
             page_size=page_size,
         )
@@ -52,25 +52,31 @@ def get_everything(
     sort_by="publishedAt",
     page_size=100,
 ):
-    if from_param is None:
-        from_param = (
-            datetime.now() - timedelta(days=1)
-        ).date().isoformat()
+    try:
+        if from_param is None:
+            from_param = (
+                datetime.now() - timedelta(days=1)
+            ).date().isoformat()
 
-    return newsapi.get_everything(
-        q=q,
-        sources=sources,
-        domains=domains,
-        from_param=from_param,
-        language=language,
-        sort_by=sort_by,
-        page_size=page_size,
-    )
+        return newsapi.get_everything(
+            q=q,
+            sources=sources,
+            domains=domains,
+            from_param=from_param,
+            language=language,
+            sort_by=sort_by,
+            page_size=page_size,
+        )
+    except Exception as e:
+        return {"error": str(e)}
 
 
-def get_sources(category=None, country=None, language=None):
-    return newsapi.get_sources(
-        category=category,
-        country=country,
-        language=COUNTRIES_LANGUAGES[country],
-    )
+def get_sources(category=None, country=None):
+    try:
+        return newsapi.get_sources(
+            category=category,
+            country=country,
+            language=COUNTRIES_LANGUAGES.get(country, "en"),
+        )
+    except Exception as e:
+        return {"error": str(e)}
