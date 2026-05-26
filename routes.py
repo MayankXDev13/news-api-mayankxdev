@@ -56,10 +56,8 @@ def everything(
 def sources(
     category: str | None = None,
     country: str | None = None,
-    language: str | None = None,
 ):
     return news_service.get_sources(
         category=category,
         country=country,
-        language=language,
     )

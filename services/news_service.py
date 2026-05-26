@@ -1,65 +1,76 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from services import news_service
+from datetime import datetime, timedelta
 
-router = APIRouter(prefix="/api/news", tags=["News"])
+from newsapi import NewsApiClient
+from config import NEWS_API_KEY
+
+newsapi = NewsApiClient(api_key=NEWS_API_KEY)
+
+COUNTRIES_LANGUAGES = {
+    "in": "en",
+    "us": "en",
+    "au": "en",
+    "ru": "ru",
+    "fr": "fr",
+    "gb": "en",
+}
+
+CATEGORIES = [
+    "business",
+    "entertainment",
+    "general",
+    "health",
+    "science",
+    "sports",
+    "technology",
+]
+
+SOURCES = ["bbc-news", "cnn", "fox-news", "google-news"]
 
 
-class TopHeadlinesRequest(BaseModel):
-    category: str = "general"
-    country: str = "in"
-    page_size: int = 100
-
-
-class EverythingRequest(BaseModel):
-    q: str | None = None
-    sources: str | None = None
-    domains: str | None = None
-    language: str | None = None
-    sort_by: str = "publishedAt"
-    page_size: int = 100
-
-
-@router.get("/top-headlines")
-def top_headlines(
+def get_top_headlines(
     category: str = "general",
     country: str = "in",
     page_size: int = 100,
 ):
-    return news_service.get_top_headlines(
-        category=category,
-        country=country,
-        page_size=page_size,
-    )
+    try:
+        return newsapi.get_top_headlines(
+            category=category,
+            language=COUNTRIES_LANGUAGES[country],
+            country=country,
+            page_size=page_size,
+        )
+    except Exception as e:
+        return {"error": str(e)}
 
 
-@router.get("/everything")
-def everything(
-    q: str | None = None,
-    sources: str | None = None,
-    domains: str | None = None,
-    language: str | None = None,
-    sort_by: str = "publishedAt",
-    page_size: int = 100,
+def get_everything(
+    q=None,
+    sources=None,
+    domains=None,
+    from_param=None,
+    language=None,
+    sort_by="publishedAt",
+    page_size=100,
 ):
-    return news_service.get_everything(
+    if from_param is None:
+        from_param = (
+            datetime.now() - timedelta(days=1)
+        ).date().isoformat()
+
+    return newsapi.get_everything(
         q=q,
         sources=sources,
         domains=domains,
+        from_param=from_param,
         language=language,
         sort_by=sort_by,
         page_size=page_size,
     )
 
 
-@router.get("/sources")
-def sources(
-    category: str | None = None,
-    country: str | None = None,
-    language: str | None = None,
-):
-    return news_service.get_sources(
+def get_sources(category=None, country=None, language=None):
+    return newsapi.get_sources(
         category=category,
         country=country,
-        language=language,
+        language=COUNTRIES_LANGUAGES[country],
     )
